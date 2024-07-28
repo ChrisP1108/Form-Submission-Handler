@@ -3,7 +3,7 @@ export default class FormHandler {
     #formNode;
     #fieldNodes = [];
     #formData = {};
-    #changeSubscribers = [];
+    #onChangeSubscribers = [];
     #onSubmitFinishSubscribers = [];
     #onSubmitInitSubscribers = [];
     #submitUrl;
@@ -50,7 +50,7 @@ export default class FormHandler {
         this.#fieldNodes.forEach(node => {
             const listenerType = this.#getListenerType(node);
             if (listenerType) {
-                node.addEventListener(listenerType, this.#debounce(() => this.#updateFormData(node), 300));
+                node.addEventListener(listenerType, () => this.#updateFormData(node));
             }
         });
 
@@ -89,15 +89,7 @@ export default class FormHandler {
         } else {
             this.#formData[node.name] = node.value;
         }
-        this.#changeSubscribers.forEach(subscriber => subscriber(this.#formData));
-    }
-
-    #debounce(func, delay) {
-        let timer;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => func.apply(this, args), delay);
-        };
+        this.#onChangeSubscribers.forEach(subscriber => subscriber(this.#formData));
     }
 
     validateFormData() {
@@ -194,7 +186,7 @@ export default class FormHandler {
 
     onChange(callback) {
         if (typeof callback === 'function') {
-            this.#changeSubscribers.push(callback);
+            this.#onChangeSubscribers.push(callback);
         } else {
             console.error("onChange parameter needs to be a function.");
         }
@@ -228,7 +220,7 @@ export default class FormHandler {
         const timeoutPromise = new Promise((resolve) => {
             setTimeout(() => {
                 resolve({ ok: false, status: null, msg: "Timed out.", outputMsg: "Took too long to get a response from the server. Please try again." });
-            }, 10000);
+            }, 8000);
         });
     
         const fetchPromise = fetch(this.#submitUrl, {
@@ -240,7 +232,7 @@ export default class FormHandler {
             body: this.JSON
         }).then(async (res) => {
             if (res.ok) {
-                return { ok: res.ok, status: res.status, data: await res.json(), outputMsg: this.#responseSuccessMsg };
+                return { ok: res.ok, status: res.status, data: await res.json(), msg: "Success", outputMsg: this.#responseSuccessMsg };
             } else {
                 console.error(`Server responded with a ${res.status} status code`);
                 return { ok: false, status: res.status, msg: `Server responded with a ${res.status} status code`, outputMsg: outputErrMsg };
