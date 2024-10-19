@@ -1,5 +1,7 @@
 export default class FormHandler {
 
+    // Properties
+
     #formNode;
     #fieldNodes = [];
     #formData = {};
@@ -10,6 +12,7 @@ export default class FormHandler {
     #submissionResponse;
     #submitContentType = 'application/json';
     #clearFieldsOnSuccess = true;
+    #removeFormFieldsOnSuccess = false;
     #responseSuccessMsg;
     #customHeaders = {};
 
@@ -20,18 +23,15 @@ export default class FormHandler {
 
         if (this.#formNode) {
             this.#selectAllFormInputNodes();
-        }
+        } else console.error("Form node must be provided as first parameter in FormHandler class.");
     }
 
     #selectAllFormInputNodes() {
-        if (!this.#formNode) return;
-
         this.#fieldNodes = [
             ...this.#formNode.querySelectorAll("input"),
             ...this.#formNode.querySelectorAll("select"),
             ...this.#formNode.querySelectorAll("textarea")
         ];
-
         this.#setEventListeners();
     }
 
@@ -44,6 +44,12 @@ export default class FormHandler {
             }
         });
         this.#formData = {};
+    }
+
+    removeFormFields() {
+        if (this.#formNode) {
+            this.#formNode.querySelectorAll("*:not(.form-submission-success)").forEach(node => node.remove());
+        }
     }
 
     #setEventListeners() {
@@ -104,9 +110,7 @@ export default class FormHandler {
         outputMsgNode.classList.add("form-submission-result-msg");
         if (!formSubmit.ok) {
             outputMsgNode.classList.add("form-submission-err-msg");
-        }
-        if (formSubmit.ok && this.#clearFieldsOnSuccess) {
-            this.clearFields();
+        } else {
             outputMsgNode.classList.add("form-submission-success");
         }
         outputMsgNode.innerHTML = formSubmit.outputMsg;
@@ -121,6 +125,8 @@ export default class FormHandler {
         }
         this.#submissionResponse = formSubmit;
         this.#onSubmitFinishSubscribers.forEach(subscriber => subscriber(this.#formData));
+        if (this.#clearFieldsOnSuccess) this.clearFields();
+        if (this.#removeFormFieldsOnSuccess) this.removeFormFields();
     }
 
     get data() {
@@ -173,6 +179,12 @@ export default class FormHandler {
     set clearFieldsOnSuccess(value) {
         if (typeof value === 'boolean') {
             this.#clearFieldsOnSuccess = value;
+        }
+    }
+
+    set removeFormFieldsOnSuccess(value) {
+        if (typeof value === 'boolean') {
+            this.#removeFormFieldsOnSuccess = value;
         }
     }
 
