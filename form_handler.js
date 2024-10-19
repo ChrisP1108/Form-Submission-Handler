@@ -89,9 +89,7 @@ export default class FormHandler {
         if (node.type === 'radio' || node.type === 'checkbox') {
             if (node.checked) {
                 this.#formData[node.name] = node.value;
-            } else if (node.type === 'checkbox' && !node.checked) {
-                delete this.#formData[node.name];
-            }
+            } else delete this.#formData[node.name];
         } else {
             this.#formData[node.name] = node.value;
         }
@@ -124,7 +122,7 @@ export default class FormHandler {
             });
         }
         this.#submissionResponse = formSubmit;
-        this.#onSubmitFinishSubscribers.forEach(subscriber => subscriber(this.#formData));
+        this.#onSubmitFinishSubscribers.forEach(subscriber => subscriber({ response: this.#submissionResponse, formData: this.#formData }));
         if (this.#clearFieldsOnSuccess) this.clearFields();
         if (this.#removeFormFieldsOnSuccess) this.removeFormFields();
     }
