@@ -28,7 +28,7 @@ export default class FormHandler {
 
     #selectAllFormInputNodes() {
         this.#fieldNodes = [
-            ...this.#formNode.querySelectorAll("input"),
+            ...this.#formNode.querySelectorAll(`input:not([type="submit"])`),
             ...this.#formNode.querySelectorAll("select"),
             ...this.#formNode.querySelectorAll("textarea")
         ];
@@ -39,7 +39,7 @@ export default class FormHandler {
         this.#fieldNodes.forEach(node => {
             if (node.type === 'radio' || node.type === 'checkbox') {
                 node.checked = false;
-            } else {
+            } else if (node.type !== 'submit'){
                 node.value = '';
             }
         });
@@ -87,13 +87,30 @@ export default class FormHandler {
     }
 
     #updateFormData(node) {
-        if (node.type === 'radio' || node.type === 'checkbox') {
+        if (node.type === 'radio') {
             if (node.checked) {
                 this.#formData[node.name] = node.value;
             } else this.#formData[node.name] = '';
-        } else {
-            this.#formData[node.name] = node.value;
-        }
+        } else if (node.type === 'checkbox') {
+            const multipleChoiceCheckboxes = this.#fieldNodes.filter(n => n.name === node.name);
+            if (multipleChoiceCheckboxes.length > 1) {
+                if (this.#formData[node.name]) {
+                    if (this.#formData[node.name].includes(node.value) && !node.checked) {
+                        this.#formData[node.name] = this.#formData[node.name].filter(selection => selection !== node.value);
+                        this.#formData[node.name].sort();
+                    } else if (node.checked) {
+                        this.#formData[node.name].push(node.value);
+                        this.#formData[node.name].sort();
+                    }
+                } else if (node.checked) {
+                    this.#formData[node.name] = [node.value];
+                } else this.#formData[node.name] = [];
+            } else {
+                if (node.checked) {
+                    this.#formData[node.name] = node.value;
+                } else this.#formData[node.name] = '';
+            }
+        } else this.#formData[node.name] = node.value;
         this.#onChangeSubscribers.forEach(subscriber => subscriber(this.#formData));
     }
 
@@ -112,7 +129,7 @@ export default class FormHandler {
         } else {
             outputMsgNode.classList.add("form-submission-success");
         }
-        outputMsgNode.innerHTML = formSubmit.outputMsg;
+        outputMsgNode.innerText = formSubmit.outputMsg;
         if (this.#responseSuccessMsg) {
             const existingMsgNode = this.#formNode.querySelector("p.form-submission-result-msg");
             if (existingMsgNode) existingMsgNode.remove();
