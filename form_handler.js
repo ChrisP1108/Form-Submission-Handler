@@ -55,6 +55,7 @@ export default class FormHandler {
     #setEventListeners() {
         this.#fieldNodes.forEach(node => {
             const listenerType = this.#getListenerType(node);
+            this.#updateFormData(node);
             if (listenerType) {
                 node.addEventListener(listenerType, () => this.#updateFormData(node));
             }
@@ -89,7 +90,7 @@ export default class FormHandler {
         if (node.type === 'radio' || node.type === 'checkbox') {
             if (node.checked) {
                 this.#formData[node.name] = node.value;
-            } else delete this.#formData[node.name];
+            } else this.#formData[node.name] = '';
         } else {
             this.#formData[node.name] = node.value;
         }
